@@ -35,6 +35,7 @@ public sealed class AntiCheatChecks : EntitySystem
         "Robust.Client",
         "Robust.Shared",
         "Robust.Server",
+        "Content.Anticheat",
     ];
 
     public override void Initialize()

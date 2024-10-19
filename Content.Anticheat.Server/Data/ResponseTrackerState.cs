@@ -12,5 +12,5 @@ public struct ResponseTrackerState
 {
     public NetUserId Client;
     public Type ResponseEvent;
-    public TimeSpan awaitBy;
+    public TimeSpan AwaitBy;
 }

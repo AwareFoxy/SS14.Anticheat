@@ -37,11 +37,10 @@ public sealed partial class ServerAnticheatSystem : EntitySystem
             return;
         }
 
-        if (e.OldStatus == SessionStatus.InGame && e.NewStatus == SessionStatus.Disconnected)
+        if (e is { OldStatus: SessionStatus.InGame, NewStatus: SessionStatus.Disconnected })
             _clientData.RemoveClient(e.Session.UserId);
 
         if (e.NewStatus == SessionStatus.Connected)
             SendJoinRequest(e.Session);
     }
-
 }

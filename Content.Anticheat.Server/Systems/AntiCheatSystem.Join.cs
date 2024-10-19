@@ -29,8 +29,7 @@ public sealed partial class ServerAnticheatSystem
         Log.Info("Sending a join request");
         var ev = new AnticheatJoinReqEvent();
 
-        RaiseNetworkEvent(ev, session);
-        _respTracker.TryQueueResponse(session, ev.ExpectedReplyType);
+        _respTracker.RaiseExpectedReturnNetworkedEvent(ev, session);
     }
 
     /// <param name="response">The userid the client gave us</param>

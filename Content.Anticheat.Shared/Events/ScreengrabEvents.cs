@@ -10,8 +10,10 @@ using Robust.Shared.Serialization;
 namespace Content.Anticheat.Shared.Events;
 
 [Serializable, NetSerializable]
-public sealed class ScreengrabRequestEvent : EntityEventArgs
+public sealed class ScreengrabRequestEvent : ExpectedReplyEntityEventArgs
 {
+    [field: NonSerialized]
+    public override Type ExpectedReplyType { get; } = typeof(ScreengrabResponseEvent);
 }
 
 [Serializable, NetSerializable]

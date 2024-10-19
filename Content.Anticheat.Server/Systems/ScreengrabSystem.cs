@@ -28,8 +28,8 @@ public sealed class ScreengrabSystem : EntitySystem
     }
     public void RequestScreengrab(ICommonSession target)
     {
-        RaiseNetworkEvent(new ScreengrabRequestEvent(), target);
-        _respTracker.TryQueueResponse(target, typeof(ScreengrabResponseEvent));
+        var ev = new ScreengrabRequestEvent();
+        _respTracker.RaiseExpectedReturnNetworkedEvent(ev, target);
     }
 
     public void OnScreengrabReply(ScreengrabResponseEvent ev, EntitySessionEventArgs args)

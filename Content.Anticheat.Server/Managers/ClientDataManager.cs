@@ -18,18 +18,13 @@ namespace Content.Anticheat.Server.Managers;
 
 public sealed class ClientDataManager : IClientDataManager
 {
-    [Dependency] private readonly INetManager _netManager = default!;
-
-    [ViewVariables(VVAccess.ReadOnly)]
-    private float _timeout = 30f;
-
     [ViewVariables(VVAccess.ReadOnly)]
     private Dictionary<NetUserId, ClientInfo> _clients = [];
 
-    public ClientDataManager()
-    {
-    }
-
+    /// <summary>
+    /// Attempt to register a client
+    /// </summary>
+    /// <returns>False if we already have a registered client</returns>
     public bool TryRegisterClient(NetUserId client)
     {
         if (TryGetClientInfo(client, out _))

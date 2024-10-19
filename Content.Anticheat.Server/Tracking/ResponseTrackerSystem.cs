@@ -5,6 +5,7 @@
 // ***
 
 using Content.Anticheat.Server.Data;
+using Content.Anticheat.Server.Managers;
 using Content.Anticheat.Shared;
 using Robust.Server.Player;
 using Robust.Shared;
@@ -20,10 +21,13 @@ namespace Content.Anticheat.Server.Tracking;
 
 public sealed class ResponseTrackerSystem : EntitySystem
 {
+    // This entire thing should be a manager in all due honesty
+
     [Dependency] private readonly IServerNetManager _netManager = default!;
     [Dependency] private readonly IPlayerManager _player = default!;
     [Dependency] private readonly IConfigurationManager _cfg = default!;
     [Dependency] private readonly IGameTiming _timing = default!;
+    [Dependency] private readonly ClientDataManager _cdm = default!;
 
     /// <summary>
     /// Events from clients which we are awaiting from
@@ -89,8 +93,8 @@ public sealed class ResponseTrackerSystem : EntitySystem
             if (!_states.Contains(state))
                 continue;
 
-            if (state.awaitBy < curtime)
-                ResponseTimeout(state.Client, $"exceeded allotted time to send a {state.ResponseEvent.Name} response.");
+            if (state.AwaitBy < curtime)
+                ResponseTimeout(state.Client);
         }
     }
 
@@ -101,7 +105,7 @@ public sealed class ResponseTrackerSystem : EntitySystem
     /// <param name="expectedEvent">The event we are expecting</param>
     /// <param name="timeoutOverride">Optional - time allotted to receive that event</param>
     /// <returns>True if event was queued</returns>
-    public bool TryQueueResponse(ICommonSession user, Type expectedEvent, float? timeoutOverride = null)
+    private bool TryQueueResponse(ICommonSession user, Type expectedEvent, float? timeoutOverride = null)
     {
         if (AreAlreadyAwaiting(user.UserId, expectedEvent))
         {
@@ -111,7 +115,10 @@ public sealed class ResponseTrackerSystem : EntitySystem
 
         _states.Add(new ResponseTrackerState
         {
-            awaitBy = _timing.CurTime + (timeoutOverride != null ? TimeSpan.FromSeconds(timeoutOverride.Value) : TimeSpan.FromSeconds(_timeout)),
+            AwaitBy = _timing.CurTime +
+                      (timeoutOverride != null
+                          ? TimeSpan.FromSeconds(timeoutOverride.Value)
+                          : TimeSpan.FromSeconds(_timeout)),
             ResponseEvent = expectedEvent,
             Client = user.UserId,
         });
@@ -138,7 +145,7 @@ public sealed class ResponseTrackerSystem : EntitySystem
         }
     }
 
-    public bool AreAlreadyAwaiting(NetUserId user, Type awaitedEvent)
+    private bool AreAlreadyAwaiting(NetUserId user, Type awaitedEvent)
     {
         foreach (var resp in _states)
         {
@@ -150,18 +157,35 @@ public sealed class ResponseTrackerSystem : EntitySystem
     }
 
     /// <summary>
+    /// Raises a networked event to a target and starts a response timer
+    /// </summary>
+    public void RaiseExpectedReturnNetworkedEvent(
+        ExpectedReplyEntityEventArgs ev,
+        ICommonSession session,
+        float? timerOverride = null)
+    {
+        RaiseNetworkEvent(ev, session);
+        TryQueueResponse(session, ev.ExpectedReplyType, timerOverride);
+    }
+
+    /// <summary>
     /// Respond to a client timing out on sending a response to server
     /// </summary>
     /// <param name="user"></param>
-    /// <param name="reason">Reason to show to admins for the kick, will be prepended by the username</param>
-    private void ResponseTimeout(NetUserId user, string reason)
+    private void ResponseTimeout(NetUserId user)
     {
         var session = _player.GetSessionById(user);
+        if (_cdm.TryGetClientInfo(user, out var info))
+        {
+            var cinfo = info.Value;
+
+            cinfo.Checks.Timeouted.Flag = true;
+            _cdm.UpdateClient(user, cinfo);
+        }
 
         if (_cfg.GetCVar(AntiCheatCVars.AntiCheatKickResponseTimeout))
             _netManager.DisconnectChannel(session.Channel, _cfg.GetCVar(AntiCheatCVars.AntiCheatKickResonseTimeoutReason));
     }
-
 
     private void OnResponseTimeoutCVarChange(float value)
     {
