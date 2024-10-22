@@ -9,7 +9,8 @@ This is made so you could have all the files relating to the anticheat in one so
 
 Inclusions are copied using the SetInclusions.py script.
 
-### Todo:
+### Todo (this is for you, I am not doing any of this anymore):
+* [ ] Do dependency injection correctly and have the interfaces on the main content pack
 * [ ] Client tamper detections
 * * [X] Clientside detection
 * * [ ] Networking

@@ -4,12 +4,12 @@
 // This Source Code Form is "Incompatible With Secondary Licenses", as defined by the Mozilla Public License, v. 2.0.
 // ***
 
-using Robust.Shared;
 using Robust.Shared.Configuration;
 
 namespace Content.Anticheat.Shared;
 
-public sealed class AntiCheatCVars : CVars
+[CVarDefs]
+public sealed class AntiCheatCVars
 {
     /// <summary>
     /// How much time is given for the client to reply to a request, in seconds
